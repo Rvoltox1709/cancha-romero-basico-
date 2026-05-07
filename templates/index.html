@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cancha Romero1</title>
+  <title>Cancha Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
   <style>
     body { background: #f0f4f0; font-family: sans-serif; }
     .header { background: #1a3a1a; color: white; padding: 1rem 1.25rem; }
@@ -30,12 +31,18 @@
     }
     .nav-tabs .nav-link { color: #1a3a1a; }
     .nav-tabs .nav-link.active { background: #1a3a1a; color: white; border-color: #1a3a1a; }
+    #calendar { background: white; border-radius: 10px; padding: 10px; }
+    .fc-event { background: #1a3a1a !important; border-color: #1a3a1a !important; cursor: pointer; }
+    .fc-event.pendiente { background: #854F0B !important; border-color: #854F0B !important; }
+    .fc-toolbar-title { font-size: 16px !important; }
+    .fc-button { background: #1a3a1a !important; border-color: #1a3a1a !important; }
+    .fc-button-active { background: #2d6a2d !important; }
   </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>⚽ Cancha Romero1</h1>
+  <h1>⚽ Cancha Admin</h1>
   <p id="fecha-hoy"></p>
 </div>
 
@@ -47,21 +54,26 @@
       <a class="nav-link active" href="#" onclick="mostrarSeccion('cronograma')">Cronograma</a>
     </li>
     <li class="nav-item">
+      <a class="nav-link" href="#" onclick="mostrarSeccion('calendario')">Calendario</a>
+    </li>
+    <li class="nav-item">
       <a class="nav-link" href="#" onclick="mostrarSeccion('resumen')">Económico</a>
     </li>
   </ul>
 
   <!-- SECCIÓN CRONOGRAMA -->
   <div id="seccion-cronograma">
-    <!-- Selector de fecha -->
     <div class="d-flex align-items-center gap-2 mb-3">
       <button class="btn btn-sm btn-outline-secondary" onclick="cambiarFecha(-1)">‹</button>
       <input type="date" id="fecha-selector" class="form-control form-control-sm" style="max-width:160px" onchange="cargarReservas()">
       <button class="btn btn-sm btn-outline-secondary" onclick="cambiarFecha(1)">›</button>
     </div>
-
-    <!-- Lista de horarios -->
     <div id="lista-reservas"></div>
+  </div>
+
+  <!-- SECCIÓN CALENDARIO -->
+  <div id="seccion-calendario" style="display:none">
+    <div id="calendar"></div>
   </div>
 
   <!-- SECCIÓN ECONÓMICO -->
@@ -75,22 +87,16 @@
       </li>
     </ul>
     <div id="contenido-resumen"></div>
-    <div id="contenido-resumen"></div>
-
-    <!-- Botón exportar -->
     <div class="mt-3">
-        <button class="btn btn-success w-100" onclick="exportarExcel()">
-     ⬇ Descargar Excel del mes
-        </button>
-</div>
+      <button class="btn btn-success w-100" onclick="exportarExcel()">⬇ Descargar Excel del mes</button>
+    </div>
   </div>
 
 </div>
 
-<!-- Botón agregar -->
 <button class="btn-agregar" onclick="abrirModal()">+</button>
 
-<!-- MODAL AGREGAR RESERVA -->
+<!-- MODAL RESERVA -->
 <div class="modal fade" id="modalReserva" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -146,9 +152,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
   const HORAS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00','23:00'];
-  let modalBS;
+  let modalBS, calendar;
   let fechaActual = new Date().toISOString().split('T')[0];
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -156,6 +163,7 @@
     document.getElementById('fecha-selector').value = fechaActual;
     document.getElementById('fecha-hoy').textContent = formatearFecha(fechaActual);
     cargarReservas();
+    iniciarCalendario();
   });
 
   function formatearFecha(f) {
@@ -201,6 +209,76 @@
           </div>`;
       }
     });
+  }
+
+  async function iniciarCalendario() {
+    const res = await fetch('/reservas/todas');
+    const reservas = await res.json();
+
+    const eventos = reservas.map(r => ({
+      id: r.id,
+      title: r.cliente,
+      start: `${r.fecha}T${r.hora_inicio}`,
+      end: `${r.fecha}T${r.hora_fin}`,
+      classNames: r.pagado ? [] : ['pendiente'],
+      extendedProps: r
+    }));
+
+    calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+      initialView: 'timeGridWeek',
+      locale: 'es',
+      headerToolbar: {
+        left: 'prev,next',
+        center: 'title',
+        right: 'timeGridWeek,timeGridDay'
+      },
+      slotMinTime: '08:00:00',
+      slotMaxTime: '24:00:00',
+      allDaySlot: false,
+      height: 'auto',
+      events: eventos,
+      eventClick: function(info) {
+        abrirEditar(info.event.extendedProps);
+      },
+      dateClick: function(info) {
+        const hora = info.dateStr.split('T')[1]?.substring(0,5) || '08:00';
+        fechaActual = info.dateStr.split('T')[0];
+        abrirModalHora(hora);
+      }
+    });
+    calendar.render();
+  }
+
+  async function refrescarCalendario() {
+    if (!calendar) return;
+    const res = await fetch('/reservas/todas');
+    const reservas = await res.json();
+    calendar.removeAllEvents();
+    reservas.forEach(r => {
+      calendar.addEvent({
+        id: r.id,
+        title: r.cliente,
+        start: `${r.fecha}T${r.hora_inicio}`,
+        end: `${r.fecha}T${r.hora_fin}`,
+        classNames: r.pagado ? [] : ['pendiente'],
+        extendedProps: r
+      });
+    });
+  }
+
+  function mostrarSeccion(seccion) {
+    document.getElementById('seccion-cronograma').style.display = seccion === 'cronograma' ? 'block' : 'none';
+    document.getElementById('seccion-calendario').style.display = seccion === 'calendario' ? 'block' : 'none';
+    document.getElementById('seccion-resumen').style.display = seccion === 'resumen' ? 'block' : 'none';
+    document.querySelectorAll('#tabs .nav-link').forEach((el, i) => {
+      el.classList.toggle('active',
+        (seccion === 'cronograma' && i === 0) ||
+        (seccion === 'calendario' && i === 1) ||
+        (seccion === 'resumen' && i === 2)
+      );
+    });
+    if (seccion === 'resumen') mostrarResumen('dia');
+    if (seccion === 'calendario') calendar.updateSize();
   }
 
   function abrirModal() {
@@ -261,6 +339,7 @@
     await fetch(url, { method: metodo, headers: {'Content-Type':'application/json'}, body: JSON.stringify(datos) });
     modalBS.hide();
     cargarReservas();
+    refrescarCalendario();
   }
 
   async function eliminarReserva() {
@@ -269,15 +348,7 @@
     await fetch(`/reservas/${id}`, { method: 'DELETE' });
     modalBS.hide();
     cargarReservas();
-  }
-
-  function mostrarSeccion(seccion) {
-    document.getElementById('seccion-cronograma').style.display = seccion === 'cronograma' ? 'block' : 'none';
-    document.getElementById('seccion-resumen').style.display = seccion === 'resumen' ? 'block' : 'none';
-    document.querySelectorAll('#tabs .nav-link').forEach((el, i) => {
-      el.classList.toggle('active', (seccion === 'cronograma' && i === 0) || (seccion === 'resumen' && i === 1));
-    });
-    if (seccion === 'resumen') mostrarResumen('dia');
+    refrescarCalendario();
   }
 
   async function mostrarResumen(tipo) {
@@ -295,13 +366,11 @@
         <div class="col-6"><div class="bg-white rounded-3 p-3 text-center border"><div class="text-muted" style="font-size:12px">Pendiente</div><div style="font-size:24px;font-weight:600;color:#854F0B">S/. ${d.total_pendiente}</div></div></div>
       </div>`;
   }
-  
+
   function exportarExcel() {
-  const hoy = new Date();
-  const mes = hoy.getMonth() + 1;
-  const anio = hoy.getFullYear();
-  window.location.href = `/exportar/excel?mes=${mes}&anio=${anio}`;
-}
+    const hoy = new Date();
+    window.location.href = `/exportar/excel?mes=${hoy.getMonth()+1}&anio=${hoy.getFullYear()}`;
+  }
 </script>
 </body>
 </html>
