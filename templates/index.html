@@ -17,7 +17,7 @@
       margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
       border: 1px solid #e0e0e0; cursor: pointer;
     }
-    .slot .hora { font-size: 13px; font-weight: 600; color: #666; min-width: 55px; }
+    .slot .hora { font-size: 13px; font-weight: 600; color: #666; min-width: 65px; }
     .slot .info { flex: 1; }
     .slot .nombre { font-size: 15px; font-weight: 600; }
     .slot .detalle { font-size: 12px; color: #888; }
@@ -31,11 +31,9 @@
       font-size: 28px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       z-index: 999;
     }
-
-    /* CALENDARIO */
     .cal-grid {
       display: grid;
-      grid-template-columns: 52px repeat(7, 1fr);
+      grid-template-columns: 60px repeat(7, 1fr);
       border-left: 1px solid #ddd;
       border-top: 1px solid #ddd;
       background: white;
@@ -51,17 +49,17 @@
     }
     .cal-header.today { background: #e65100; }
     .cal-time {
-      font-size: 11px; color: #888;
+      font-size: 10px; color: #888;
       text-align: right; padding: 3px 5px 0 0;
       border-right: 1px solid #ddd;
       border-bottom: 1px solid #ececec;
-      height: 56px;
+      height: 44px;
       font-weight: 600;
     }
     .cal-cell {
       border-right: 1px solid #ddd;
       border-bottom: 1px solid #ececec;
-      height: 56px;
+      height: 44px;
       position: relative;
       cursor: pointer;
     }
@@ -74,14 +72,11 @@
       overflow: hidden;
     }
     .cal-event .ev-nombre { font-size: 11px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .cal-event .ev-hora { font-size: 10px; color: rgba(255,255,255,0.85); }
+    .cal-event .ev-hora { font-size: 9px; color: rgba(255,255,255,0.85); }
     .cal-event .ev-metodo { font-size: 9px; color: rgba(255,255,255,0.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ev-pagado { background: #1565c0; }
     .ev-pendiente { background: #e65100; }
-    .cal-nav {
-      display: flex; align-items: center;
-      justify-content: space-between; margin-bottom: 10px;
-    }
+    .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
     .cal-nav span { font-size: 14px; font-weight: 600; }
   </style>
 </head>
@@ -136,7 +131,7 @@
 
 <button class="btn-agregar" onclick="abrirModal()">+</button>
 
-<!-- MODAL DETALLE RESERVA (vista previa al hacer click en calendario) -->
+<!-- MODAL DETALLE -->
 <div class="modal fade" id="modalDetalle" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
@@ -146,24 +141,12 @@
           <div style="font-size:13px; color:rgba(255,255,255,0.8);" id="detalle-fecha"></div>
         </div>
         <div style="padding:1rem 1.25rem;">
-          <div style="font-size:13px; color:#555; margin-bottom:8px;">
-            <span style="font-weight:600;">🕐 Inicia:</span> <span id="detalle-inicio"></span>
-          </div>
-          <div style="font-size:13px; color:#555; margin-bottom:8px;">
-            <span style="font-weight:600;">🕐 Finaliza:</span> <span id="detalle-fin"></span>
-          </div>
-          <div style="font-size:13px; color:#555; margin-bottom:8px;">
-            <span style="font-weight:600;">📞 Teléfono:</span> <span id="detalle-tel"></span>
-          </div>
-          <div style="font-size:13px; color:#555; margin-bottom:8px;">
-            <span style="font-weight:600;">💳 Pago:</span> <span id="detalle-metodo"></span>
-          </div>
-          <div style="font-size:13px; color:#555; margin-bottom:8px;">
-            <span style="font-weight:600;">💰 Total:</span> S/. <span id="detalle-total"></span>
-          </div>
-          <div style="font-size:13px; color:#555; margin-bottom:12px;">
-            <span style="font-weight:600;">✅ Pagado:</span> S/. <span id="detalle-pagado"></span>
-          </div>
+          <div style="font-size:14px; color:#333; margin-bottom:8px;">🕐 <b>Inicia:</b> <span id="detalle-inicio"></span></div>
+          <div style="font-size:14px; color:#333; margin-bottom:8px;">🕐 <b>Finaliza:</b> <span id="detalle-fin"></span></div>
+          <div style="font-size:14px; color:#333; margin-bottom:8px;">📞 <b>Teléfono:</b> <span id="detalle-tel"></span></div>
+          <div style="font-size:14px; color:#333; margin-bottom:8px;">💳 <b>Pago:</b> <span id="detalle-metodo"></span></div>
+          <div style="font-size:14px; color:#333; margin-bottom:8px;">💰 <b>Total:</b> S/. <span id="detalle-total"></span></div>
+          <div style="font-size:14px; color:#333; margin-bottom:12px;">✅ <b>Pagado:</b> S/. <span id="detalle-pagado"></span></div>
           <div class="d-flex gap-2">
             <button class="btn btn-sm btn-outline-secondary flex-fill" data-bs-dismiss="modal">Cerrar</button>
             <button class="btn btn-sm btn-warning flex-fill" onclick="editarDesdeDetalle()">Editar</button>
@@ -191,11 +174,11 @@
         <div class="row g-2 mb-2">
           <div class="col">
             <label class="form-label">Hora inicio</label>
-            <input type="time" id="inp-inicio" class="form-control">
+            <input type="time" id="inp-inicio" class="form-control" step="1800">
           </div>
           <div class="col">
             <label class="form-label">Hora fin</label>
-            <input type="time" id="inp-fin" class="form-control">
+            <input type="time" id="inp-fin" class="form-control" step="1800">
           </div>
         </div>
         <div class="mb-2">
@@ -241,7 +224,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-const HORAS = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00','23:00'];
+const HORAS = [
+  '06:00','06:30','07:00','07:30','08:00','08:30','09:00','09:30',
+  '10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30',
+  '14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30',
+  '18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30',
+  '22:00','22:30','23:00','23:30'
+];
 const DIAS_NOMBRE = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 let modalBS, modalDetalle;
 let fechaActual = new Date().toISOString().split('T')[0];
@@ -256,6 +245,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('fecha-hoy').textContent = formatearFecha(fechaActual);
   cargarTodo();
 });
+
+function a12h(hora) {
+  const [h, m] = hora.split(':').map(Number);
+  const periodo = h >= 12 ? 'pm' : 'am';
+  const h12 = h % 12 || 12;
+  return `${h12}:${m.toString().padStart(2,'0')} ${periodo}`;
+}
 
 function lunesDe(d) {
   const dia = new Date(d);
@@ -296,7 +292,7 @@ function renderizarCronograma() {
     if (r) {
       lista.innerHTML += `
         <div class="slot" onclick="abrirEditar(${JSON.stringify(r).replace(/"/g,'&quot;')})">
-          <span class="hora">${r.hora_inicio}</span>
+          <span class="hora">${a12h(r.hora_inicio)}</span>
           <div class="info">
             <div class="nombre">${r.cliente}</div>
             <div class="detalle">📞 ${r.telefono || '-'} · S/. ${r.monto_total} ${r.metodo_pago ? '· '+r.metodo_pago : ''}</div>
@@ -306,7 +302,7 @@ function renderizarCronograma() {
     } else {
       lista.innerHTML += `
         <div class="slot libre" onclick="abrirModalHora('${hora}')">
-          <span class="hora">${hora}</span>
+          <span class="hora">${a12h(hora)}</span>
           <div class="info"><div class="nombre" style="color:#aaa">Libre</div></div>
         </div>`;
     }
@@ -317,18 +313,15 @@ function renderizarCalendario() {
   const grid = document.getElementById('cal-grid');
   grid.innerHTML = '';
   const hoy = new Date().toISOString().split('T')[0];
-
   const dias = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(semanaBase);
     d.setDate(d.getDate() + i);
     dias.push(d);
   }
-
   document.getElementById('semana-label').textContent =
     `${dias[0].getDate()}/${dias[0].getMonth()+1} — ${dias[6].getDate()}/${dias[6].getMonth()+1}`;
 
-  // Cabecera
   const cab0 = document.createElement('div');
   cab0.className = 'cal-header';
   cab0.style.background = '#333';
@@ -338,15 +331,14 @@ function renderizarCalendario() {
     const fs = fechaStr(d);
     const div = document.createElement('div');
     div.className = 'cal-header' + (fs === hoy ? ' today' : '');
-    div.innerHTML = `<div>${DIAS_NOMBRE[d.getDay()]}</div><div style="font-size:15px">${d.getDate()}</div>`;
+    div.innerHTML = `<div>${DIAS_NOMBRE[d.getDay()]}</div><div style="font-size:14px">${d.getDate()}</div>`;
     grid.appendChild(div);
   });
 
-  // Filas
   HORAS.forEach(hora => {
     const th = document.createElement('div');
     th.className = 'cal-time';
-    th.textContent = hora;
+    th.textContent = a12h(hora);
     grid.appendChild(th);
 
     dias.forEach(d => {
@@ -361,13 +353,10 @@ function renderizarCalendario() {
         ev.className = 'cal-event ' + (r.pagado ? 'ev-pagado' : 'ev-pendiente');
         ev.innerHTML = `
           <div class="ev-nombre">${r.cliente}</div>
-          <div class="ev-hora">${r.hora_inicio} - ${r.hora_fin}</div>
+          <div class="ev-hora">${a12h(r.hora_inicio)} - ${a12h(r.hora_fin)}</div>
           <div class="ev-metodo">${r.metodo_pago || ''}</div>
         `;
-        ev.onclick = (e) => {
-          e.stopPropagation();
-          abrirDetalle(r);
-        };
+        ev.onclick = (e) => { e.stopPropagation(); abrirDetalle(r); };
         cell.appendChild(ev);
       }
       grid.appendChild(cell);
@@ -381,8 +370,8 @@ function abrirDetalle(r) {
   header.style.background = r.pagado ? '#1565c0' : '#e65100';
   document.getElementById('detalle-nombre').textContent = r.cliente;
   document.getElementById('detalle-fecha').textContent = formatearFecha(r.fecha);
-  document.getElementById('detalle-inicio').textContent = r.hora_inicio;
-  document.getElementById('detalle-fin').textContent = r.hora_fin;
+  document.getElementById('detalle-inicio').textContent = a12h(r.hora_inicio);
+  document.getElementById('detalle-fin').textContent = a12h(r.hora_fin);
   document.getElementById('detalle-tel').textContent = r.telefono || '-';
   document.getElementById('detalle-metodo').textContent = r.metodo_pago || '-';
   document.getElementById('detalle-total').textContent = r.monto_total;
