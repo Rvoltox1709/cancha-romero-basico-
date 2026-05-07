@@ -53,15 +53,12 @@
       text-align: right; padding: 3px 5px 0 0;
       border-right: 1px solid #ddd;
       border-bottom: 1px solid #ececec;
-      height: 44px;
-      font-weight: 600;
+      height: 44px; font-weight: 600;
     }
     .cal-cell {
       border-right: 1px solid #ddd;
       border-bottom: 1px solid #ececec;
-      height: 44px;
-      position: relative;
-      cursor: pointer;
+      height: 44px; position: relative; cursor: pointer;
     }
     .cal-cell:hover { background: #f5faf5; }
     .cal-event {
@@ -174,11 +171,11 @@
         <div class="row g-2 mb-2">
           <div class="col">
             <label class="form-label">Hora inicio</label>
-            <input type="time" id="inp-inicio" class="form-control" step="1800">
+            <select id="inp-inicio" class="form-control"></select>
           </div>
           <div class="col">
             <label class="form-label">Hora fin</label>
-            <input type="time" id="inp-fin" class="form-control" step="1800">
+            <select id="inp-fin" class="form-control"></select>
           </div>
         </div>
         <div class="mb-2">
@@ -238,19 +235,22 @@ let semanaBase = lunesDe(new Date());
 let todasReservas = [];
 let reservaDetalle = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-  modalBS = new bootstrap.Modal(document.getElementById('modalReserva'));
-  modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalle'));
-  document.getElementById('fecha-selector').value = fechaActual;
-  document.getElementById('fecha-hoy').textContent = formatearFecha(fechaActual);
-  cargarTodo();
-});
-
 function a12h(hora) {
   const [h, m] = hora.split(':').map(Number);
   const periodo = h >= 12 ? 'pm' : 'am';
   const h12 = h % 12 || 12;
   return `${h12}:${m.toString().padStart(2,'0')} ${periodo}`;
+}
+
+function poblarSelectores() {
+  const selInicio = document.getElementById('inp-inicio');
+  const selFin = document.getElementById('inp-fin');
+  selInicio.innerHTML = '<option value="">-- Hora --</option>';
+  selFin.innerHTML = '<option value="">-- Hora --</option>';
+  HORAS.forEach(h => {
+    selInicio.innerHTML += `<option value="${h}">${a12h(h)}</option>`;
+    selFin.innerHTML += `<option value="${h}">${a12h(h)}</option>`;
+  });
 }
 
 function lunesDe(d) {
@@ -270,6 +270,15 @@ function formatearFecha(f) {
 function fechaStr(d) {
   return d.toISOString().split('T')[0];
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  modalBS = new bootstrap.Modal(document.getElementById('modalReserva'));
+  modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalle'));
+  poblarSelectores();
+  document.getElementById('fecha-selector').value = fechaActual;
+  document.getElementById('fecha-hoy').textContent = formatearFecha(fechaActual);
+  cargarTodo();
+});
 
 async function cargarTodo() {
   const res = await fetch('/reservas/todas');
