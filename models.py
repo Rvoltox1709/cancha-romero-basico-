@@ -14,11 +14,5 @@ class Reserva(db.Model):
     monto_pagado = db.Column(db.Float, default=0)
     pagado       = db.Column(db.Boolean, default=False)
     creado_en    = db.Column(db.DateTime, default=datetime.utcnow)
+    metodo_pago  = db.Column(db.String(50))
     
-class Transaccion(db.Model):
-    id          = db.Column(db.Integer, primary_key=True)
-    fecha       = db.Column(db.Date, nullable=False)
-    metodo      = db.Column(db.String(50), nullable=False)
-    monto       = db.Column(db.Float, nullable=False)
-    descripcion = db.Column(db.String(200))
-    creado_en   = db.Column(db.DateTime, default=datetime.utcnow)
