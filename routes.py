@@ -212,3 +212,31 @@ def exportar_excel():
         as_attachment=True,
         download_name=f'cancha_reservas_{mes}_{anio}.xlsx'
     )
+
+from models import Reserva, Transaccion
+
+@app.route('/transacciones', methods=['GET'])
+def ver_transacciones():
+    fecha_str = request.args.get('fecha')
+    fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date() if fecha_str else date.today()
+    transacciones = Transaccion.query.filter_by(fecha=fecha).order_by(Transaccion.creado_en.desc()).all()
+    return jsonify([{
+        'id': t.id,
+        'metodo': t.metodo,
+        'monto': t.monto,
+        'descripcion': t.descripcion,
+        'fecha': str(t.fecha)
+    } for t in transacciones])
+
+@app.route('/transacciones', methods=['POST'])
+def agregar_transaccion():
+    datos = request.get_json()
+    nueva = Transaccion(
+        fecha       = datetime.strptime(datos['fecha'], '%Y-%m-%d').date(),
+        metodo      = datos['metodo'],
+        monto       = datos['monto'],
+        descripcion = datos.get('descripcion', '')
+    )
+    db.session.add(nueva)
+    db.session.commit()
+    return jsonify({'mensaje': 'Transaccion registrada'}), 201

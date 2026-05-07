@@ -31,7 +31,7 @@
     }
     .nav-tabs .nav-link { color: #1a3a1a; }
     .nav-tabs .nav-link.active { background: #1a3a1a; color: white; border-color: #1a3a1a; }
-    #calendar { background: white; border-radius: 10px; padding: 10px; }
+    #calendar { background: white; border-radius: 10px; padding: 10px; min-height: 500px; }
     .fc-event { background: #1a3a1a !important; border-color: #1a3a1a !important; cursor: pointer; }
     .fc-event.pendiente { background: #854F0B !important; border-color: #854F0B !important; }
     .fc-toolbar-title { font-size: 16px !important; }
@@ -57,6 +57,9 @@
       <a class="nav-link" href="#" onclick="mostrarSeccion('calendario')">Calendario</a>
     </li>
     <li class="nav-item">
+      <a class="nav-link" href="#" onclick="mostrarSeccion('transacciones')">Transacciones</a>
+    </li>
+    <li class="nav-item">
       <a class="nav-link" href="#" onclick="mostrarSeccion('resumen')">Económico</a>
     </li>
   </ul>
@@ -75,6 +78,63 @@
   <div id="seccion-calendario" style="display:none">
     <div id="calendar"></div>
   </div>
+
+    <!-- SECCIÓN TRANSACCIONES -->
+  <div id="seccion-transacciones" style="display:none">
+    <h6 class="text-muted mb-3">Métodos de pago aceptados</h6>
+
+    <div class="slot mb-2" style="background:#6c2f8f; color:white; border:none;">
+      <span style="font-size:24px;">💜</span>
+      <div class="info">
+        <div class="nombre" style="color:white;">Yape — Rocío</div>
+        <div class="detalle" style="color:rgba(255,255,255,0.8);">Pago por Yape</div>
+      </div>
+    </div>
+
+    <div class="slot mb-2" style="background:#6c2f8f; color:white; border:none;">
+      <span style="font-size:24px;">💜</span>
+      <div class="info">
+        <div class="nombre" style="color:white;">Yape — Miguel</div>
+        <div class="detalle" style="color:rgba(255,255,255,0.8);">Pago por Yape</div>
+      </div>
+    </div>
+
+    <div class="slot mb-2" style="background:#0099cc; color:white; border:none;">
+      <span style="font-size:24px;">💙</span>
+      <div class="info">
+        <div class="nombre" style="color:white;">Plin — Papá</div>
+        <div class="detalle" style="color:rgba(255,255,255,0.8);">Pago por Plin</div>
+      </div>
+    </div>
+
+  <hr>
+  <h6 class="text-muted mb-3">Registrar pago recibido</h6>
+
+  <div class="bg-white rounded-3 p-3 border">
+    <div class="mb-2">
+      <label class="form-label">Método de pago</label>
+      <select id="metodo-pago" class="form-control">
+        <option value="Yape Rocío">Yape — Rocío</option>
+        <option value="Yape Miguel">Yape — Miguel</option>
+        <option value="Plin Papá">Plin — Papá</option>
+        <option value="Efectivo">Efectivo</option>
+      </select>
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Monto recibido (S/.)</label>
+      <input type="number" id="monto-transaccion" class="form-control" placeholder="0">
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Descripción</label>
+      <input type="text" id="desc-transaccion" class="form-control" placeholder="Ej: Reserva 18:00 - Juan">
+    </div>
+    <button class="btn btn-success w-100" onclick="guardarTransaccion()">Registrar pago</button>
+  </div>
+
+  <hr>
+  <h6 class="text-muted mb-2">Pagos de hoy</h6>
+  <div id="lista-transacciones"></div>
+</div>
 
   <!-- SECCIÓN ECONÓMICO -->
   <div id="seccion-resumen" style="display:none">
@@ -232,10 +292,10 @@
         center: 'title',
         right: 'timeGridWeek,timeGridDay'
       },
-      slotMinTime: '08:00:00',
+      slotMinTime: '06:00:00',
       slotMaxTime: '24:00:00',
       allDaySlot: false,
-      height: 'auto',
+      height: '550',
       events: eventos,
       eventClick: function(info) {
         abrirEditar(info.event.extendedProps);
@@ -371,6 +431,54 @@
     const hoy = new Date();
     window.location.href = `/exportar/excel?mes=${hoy.getMonth()+1}&anio=${hoy.getFullYear()}`;
   }
+  
+  function mostrarSeccion(seccion) {
+  document.getElementById('seccion-cronograma').style.display = seccion === 'cronograma' ? 'block' : 'none';
+  document.getElementById('seccion-calendario').style.display = seccion === 'calendario' ? 'block' : 'none';
+  document.getElementById('seccion-transacciones').style.display = seccion === 'transacciones' ? 'block' : 'none';
+  document.getElementById('seccion-resumen').style.display = seccion === 'resumen' ? 'block' : 'none';
+  document.querySelectorAll('#tabs .nav-link').forEach((el, i) => {
+    el.classList.toggle('active',
+      (seccion === 'cronograma' && i === 0) ||
+      (seccion === 'calendario' && i === 1) ||
+      (seccion === 'transacciones' && i === 2) ||
+      (seccion === 'resumen' && i === 3)
+    );
+  });
+  if (seccion === 'resumen') mostrarResumen('dia');
+  if (seccion === 'calendario') calendar.updateSize();
+  if (seccion === 'transacciones') cargarTransacciones();
+}
+
+async function guardarTransaccion() {
+  const datos = {
+    metodo: document.getElementById('metodo-pago').value,
+    monto: parseFloat(document.getElementById('monto-transaccion').value) || 0,
+    descripcion: document.getElementById('desc-transaccion').value,
+    fecha: fechaActual
+  };
+  if (!datos.monto) { alert('Ingresa un monto'); return; }
+  await fetch('/transacciones', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(datos) });
+  document.getElementById('monto-transaccion').value = '';
+  document.getElementById('desc-transaccion').value = '';
+  cargarTransacciones();
+}
+
+async function cargarTransacciones() {
+  const res = await fetch(`/transacciones?fecha=${fechaActual}`);
+  const lista = await res.json();
+  const div = document.getElementById('lista-transacciones');
+  if (lista.length === 0) { div.innerHTML = '<p class="text-muted text-center">Sin pagos registrados hoy</p>'; return; }
+  div.innerHTML = lista.map(t => `
+    <div class="slot mb-2">
+      <div class="info">
+        <div class="nombre">${t.metodo}</div>
+        <div class="detalle">${t.descripcion || ''}</div>
+      </div>
+      <span class="badge-pagado">S/. ${t.monto}</span>
+    </div>
+  `).join('');
+}
 </script>
 </body>
 </html>
