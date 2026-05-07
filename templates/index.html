@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancha Romero1</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f4f0; font-family: sans-serif; }
+    .header { background: #1a3a1a; color: white; padding: 1rem 1.25rem; }
+    .header h1 { font-size: 20px; margin: 0; }
+    .header p { font-size: 13px; opacity: 0.7; margin: 0; }
+    .slot {
+      background: white; border-radius: 10px; padding: 12px 14px;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
+      border: 1px solid #e0e0e0;
+    }
+    .slot .hora { font-size: 13px; font-weight: 600; color: #666; min-width: 55px; }
+    .slot .info { flex: 1; }
+    .slot .nombre { font-size: 15px; font-weight: 600; }
+    .slot .detalle { font-size: 12px; color: #888; }
+    .badge-pagado { background: #e8f5e1; color: #3B6D11; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-pendiente { background: #fff3cd; color: #854F0B; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .libre { opacity: 0.4; }
+    .btn-agregar {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #1a3a1a; color: white; border: none;
+      width: 56px; height: 56px; border-radius: 50%;
+      font-size: 28px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .nav-tabs .nav-link { color: #1a3a1a; }
+    .nav-tabs .nav-link.active { background: #1a3a1a; color: white; border-color: #1a3a1a; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚽ Cancha Romero1</h1>
+  <p id="fecha-hoy"></p>
+</div>
+
+<div class="container-fluid p-3">
+
+  <!-- Navegación -->
+  <ul class="nav nav-tabs mb-3" id="tabs">
+    <li class="nav-item">
+      <a class="nav-link active" href="#" onclick="mostrarSeccion('cronograma')">Cronograma</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="mostrarSeccion('resumen')">Económico</a>
+    </li>
+  </ul>
+
+  <!-- SECCIÓN CRONOGRAMA -->
+  <div id="seccion-cronograma">
+    <!-- Selector de fecha -->
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <button class="btn btn-sm btn-outline-secondary" onclick="cambiarFecha(-1)">‹</button>
+      <input type="date" id="fecha-selector" class="form-control form-control-sm" style="max-width:160px" onchange="cargarReservas()">
+      <button class="btn btn-sm btn-outline-secondary" onclick="cambiarFecha(1)">›</button>
+    </div>
+
+    <!-- Lista de horarios -->
+    <div id="lista-reservas"></div>
+  </div>
+
+  <!-- SECCIÓN ECONÓMICO -->
+  <div id="seccion-resumen" style="display:none">
+    <ul class="nav nav-pills mb-3">
+      <li class="nav-item">
+        <a class="nav-link active" href="#" onclick="mostrarResumen('dia')">Hoy</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" onclick="mostrarResumen('mes')">Este mes</a>
+      </li>
+    </ul>
+    <div id="contenido-resumen"></div>
+    <div id="contenido-resumen"></div>
+
+    <!-- Botón exportar -->
+    <div class="mt-3">
+        <button class="btn btn-success w-100" onclick="exportarExcel()">
+     ⬇ Descargar Excel del mes
+        </button>
+</div>
+  </div>
+
+</div>
+
+<!-- Botón agregar -->
+<button class="btn-agregar" onclick="abrirModal()">+</button>
+
+<!-- MODAL AGREGAR RESERVA -->
+<div class="modal fade" id="modalReserva" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal-titulo">Nueva reserva</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="reserva-id">
+        <div class="mb-2">
+          <label class="form-label">Fecha</label>
+          <input type="date" id="inp-fecha" class="form-control">
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col">
+            <label class="form-label">Hora inicio</label>
+            <input type="time" id="inp-inicio" class="form-control">
+          </div>
+          <div class="col">
+            <label class="form-label">Hora fin</label>
+            <input type="time" id="inp-fin" class="form-control">
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Cliente</label>
+          <input type="text" id="inp-cliente" class="form-control" placeholder="Nombre">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Teléfono</label>
+          <input type="tel" id="inp-telefono" class="form-control" placeholder="999 999 999">
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col">
+            <label class="form-label">Monto total (S/.)</label>
+            <input type="number" id="inp-total" class="form-control" placeholder="0">
+          </div>
+          <div class="col">
+            <label class="form-label">Monto pagado (S/.)</label>
+            <input type="number" id="inp-pagado" class="form-control" placeholder="0">
+          </div>
+        </div>
+        <div class="form-check mb-2">
+          <input type="checkbox" id="inp-estado" class="form-check-input">
+          <label class="form-check-label" for="inp-estado">Pagado completo</label>
+        </div>
+      </div>
+      <div class="modal-footer flex-column gap-2">
+        <button class="btn btn-success w-100" onclick="guardarReserva()">Guardar</button>
+        <button class="btn btn-outline-danger w-100" id="btn-eliminar" style="display:none" onclick="eliminarReserva()">Eliminar reserva</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const HORAS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00','23:00'];
+  let modalBS;
+  let fechaActual = new Date().toISOString().split('T')[0];
+
+  document.addEventListener('DOMContentLoaded', () => {
+    modalBS = new bootstrap.Modal(document.getElementById('modalReserva'));
+    document.getElementById('fecha-selector').value = fechaActual;
+    document.getElementById('fecha-hoy').textContent = formatearFecha(fechaActual);
+    cargarReservas();
+  });
+
+  function formatearFecha(f) {
+    const d = new Date(f + 'T00:00:00');
+    return d.toLocaleDateString('es-PE', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  }
+
+  function cambiarFecha(dias) {
+    const d = new Date(fechaActual + 'T00:00:00');
+    d.setDate(d.getDate() + dias);
+    fechaActual = d.toISOString().split('T')[0];
+    document.getElementById('fecha-selector').value = fechaActual;
+    cargarReservas();
+  }
+
+  async function cargarReservas() {
+    fechaActual = document.getElementById('fecha-selector').value;
+    const res = await fetch(`/reservas?fecha=${fechaActual}`);
+    const reservas = await res.json();
+    renderizarCronograma(reservas);
+  }
+
+  function renderizarCronograma(reservas) {
+    const lista = document.getElementById('lista-reservas');
+    lista.innerHTML = '';
+    HORAS.forEach(hora => {
+      const r = reservas.find(x => x.hora_inicio === hora);
+      if (r) {
+        lista.innerHTML += `
+          <div class="slot" onclick="abrirEditar(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+            <span class="hora">${r.hora_inicio}</span>
+            <div class="info">
+              <div class="nombre">${r.cliente}</div>
+              <div class="detalle">📞 ${r.telefono || '-'} · S/. ${r.monto_total}</div>
+            </div>
+            <span class="${r.pagado ? 'badge-pagado' : 'badge-pendiente'}">${r.pagado ? 'Pagado' : 'Pendiente'}</span>
+          </div>`;
+      } else {
+        lista.innerHTML += `
+          <div class="slot libre" onclick="abrirModalHora('${hora}')">
+            <span class="hora">${hora}</span>
+            <div class="info"><div class="nombre" style="color:#aaa">Libre</div></div>
+          </div>`;
+      }
+    });
+  }
+
+  function abrirModal() {
+    document.getElementById('modal-titulo').textContent = 'Nueva reserva';
+    document.getElementById('reserva-id').value = '';
+    document.getElementById('inp-fecha').value = fechaActual;
+    document.getElementById('inp-inicio').value = '';
+    document.getElementById('inp-fin').value = '';
+    document.getElementById('inp-cliente').value = '';
+    document.getElementById('inp-telefono').value = '';
+    document.getElementById('inp-total').value = '';
+    document.getElementById('inp-pagado').value = '';
+    document.getElementById('inp-estado').checked = false;
+    document.getElementById('btn-eliminar').style.display = 'none';
+    modalBS.show();
+  }
+
+  function abrirModalHora(hora) {
+    abrirModal();
+    document.getElementById('inp-inicio').value = hora;
+    const siguiente = HORAS[HORAS.indexOf(hora) + 1] || '';
+    document.getElementById('inp-fin').value = siguiente;
+  }
+
+  function abrirEditar(r) {
+    document.getElementById('modal-titulo').textContent = 'Editar reserva';
+    document.getElementById('reserva-id').value = r.id;
+    document.getElementById('inp-fecha').value = r.fecha;
+    document.getElementById('inp-inicio').value = r.hora_inicio;
+    document.getElementById('inp-fin').value = r.hora_fin;
+    document.getElementById('inp-cliente').value = r.cliente;
+    document.getElementById('inp-telefono').value = r.telefono;
+    document.getElementById('inp-total').value = r.monto_total;
+    document.getElementById('inp-pagado').value = r.monto_pagado;
+    document.getElementById('inp-estado').checked = r.pagado;
+    document.getElementById('btn-eliminar').style.display = 'block';
+    modalBS.show();
+  }
+
+  async function guardarReserva() {
+    const id = document.getElementById('reserva-id').value;
+    const datos = {
+      fecha: document.getElementById('inp-fecha').value,
+      hora_inicio: document.getElementById('inp-inicio').value,
+      hora_fin: document.getElementById('inp-fin').value,
+      cliente: document.getElementById('inp-cliente').value,
+      telefono: document.getElementById('inp-telefono').value,
+      monto_total: parseFloat(document.getElementById('inp-total').value) || 0,
+      monto_pagado: parseFloat(document.getElementById('inp-pagado').value) || 0,
+      pagado: document.getElementById('inp-estado').checked
+    };
+    if (!datos.cliente || !datos.fecha || !datos.hora_inicio) {
+      alert('Completa fecha, hora y nombre del cliente');
+      return;
+    }
+    const url = id ? `/reservas/${id}` : '/reservas';
+    const metodo = id ? 'PUT' : 'POST';
+    await fetch(url, { method: metodo, headers: {'Content-Type':'application/json'}, body: JSON.stringify(datos) });
+    modalBS.hide();
+    cargarReservas();
+  }
+
+  async function eliminarReserva() {
+    const id = document.getElementById('reserva-id').value;
+    if (!confirm('¿Eliminar esta reserva?')) return;
+    await fetch(`/reservas/${id}`, { method: 'DELETE' });
+    modalBS.hide();
+    cargarReservas();
+  }
+
+  function mostrarSeccion(seccion) {
+    document.getElementById('seccion-cronograma').style.display = seccion === 'cronograma' ? 'block' : 'none';
+    document.getElementById('seccion-resumen').style.display = seccion === 'resumen' ? 'block' : 'none';
+    document.querySelectorAll('#tabs .nav-link').forEach((el, i) => {
+      el.classList.toggle('active', (seccion === 'cronograma' && i === 0) || (seccion === 'resumen' && i === 1));
+    });
+    if (seccion === 'resumen') mostrarResumen('dia');
+  }
+
+  async function mostrarResumen(tipo) {
+    document.querySelectorAll('#seccion-resumen .nav-link').forEach((el, i) => {
+      el.classList.toggle('active', (tipo === 'dia' && i === 0) || (tipo === 'mes' && i === 1));
+    });
+    let url = tipo === 'dia' ? `/resumen/dia?fecha=${fechaActual}` : `/resumen/mes?anio=${new Date().getFullYear()}&mes=${new Date().getMonth()+1}`;
+    const res = await fetch(url);
+    const d = await res.json();
+    document.getElementById('contenido-resumen').innerHTML = `
+      <div class="row g-3">
+        <div class="col-6"><div class="bg-white rounded-3 p-3 text-center border"><div class="text-muted" style="font-size:12px">Reservas</div><div style="font-size:28px;font-weight:600">${d.total_reservas}</div></div></div>
+        <div class="col-6"><div class="bg-white rounded-3 p-3 text-center border"><div class="text-muted" style="font-size:12px">Esperado</div><div style="font-size:24px;font-weight:600;color:#1a3a1a">S/. ${d.total_esperado}</div></div></div>
+        <div class="col-6"><div class="bg-white rounded-3 p-3 text-center border"><div class="text-muted" style="font-size:12px">Cobrado</div><div style="font-size:24px;font-weight:600;color:#3B6D11">S/. ${d.total_cobrado}</div></div></div>
+        <div class="col-6"><div class="bg-white rounded-3 p-3 text-center border"><div class="text-muted" style="font-size:12px">Pendiente</div><div style="font-size:24px;font-weight:600;color:#854F0B">S/. ${d.total_pendiente}</div></div></div>
+      </div>`;
+  }
+  
+  function exportarExcel() {
+  const hoy = new Date();
+  const mes = hoy.getMonth() + 1;
+  const anio = hoy.getFullYear();
+  window.location.href = `/exportar/excel?mes=${mes}&anio=${anio}`;
+}
+</script>
+</body>
+</html>
